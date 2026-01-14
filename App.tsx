@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { 
   Scale, 
   History, 
@@ -106,6 +107,9 @@ const App: React.FC = () => {
 
   return (
     <div className="mobile-frame flex flex-col h-screen overflow-hidden text-slate-800">
+      {/* Vercel Analytics */}
+      <Analytics />
+      
       {/* Header */}
       <header className="p-6 pb-2 flex justify-between items-center bg-[#F5F5F7] z-10">
         <div>
