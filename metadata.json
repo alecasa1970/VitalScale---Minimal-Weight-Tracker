@@ -1,0 +1,7 @@
+{
+  "name": "VitalScale - Minimal Weight Tracker",
+  "description": "A sophisticated, mobile-first health application for tracking weight, monitoring BMI, and receiving AI-powered insights for wellness journey optimization.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
