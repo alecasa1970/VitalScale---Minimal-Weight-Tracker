@@ -25,7 +25,7 @@ const STORAGE_KEY_PROFILE = 'vitalscale_profile';
 const App: React.FC = () => {
   // State
   const [weights, setWeights] = useState<WeightEntry[]>([]);
-  const [profile, setProfile] = useState<UserProfile>({ height: 170 });
+  const [profile, setProfile] = useState<UserProfile>({ height: 170, age: 25 });
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'ai' | 'profile'>('home');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -63,12 +63,29 @@ const App: React.FC = () => {
 
   const bmi = useMemo((): BMIResult => {
     if (!profile.height || weights.length === 0) {
-      return { value: 0, category: 'Unknown', color: 'text-gray-400' };
+      return { 
+        value: 0, 
+        category: 'Unknown', 
+        color: 'text-gray-400', 
+        idealRange: { min: 0, max: 0 }, 
+        toIdeal: 0 
+      };
     }
     const latestWeight = weights[0].weight;
     const heightInMeters = profile.height / 100;
     const value = latestWeight / (heightInMeters * heightInMeters);
     
+    // Ideal range calculation (BMI 18.5 to 24.9)
+    const minIdeal = 18.5 * (heightInMeters * heightInMeters);
+    const maxIdeal = 24.9 * (heightInMeters * heightInMeters);
+    
+    let toIdeal = 0;
+    if (value < 18.5) {
+      toIdeal = minIdeal - latestWeight; // Positive means need to gain
+    } else if (value > 24.9) {
+      toIdeal = latestWeight - maxIdeal; // Positive means need to lose
+    }
+
     let category: BMICategory = 'Normal';
     let color = 'text-green-500';
 
@@ -86,13 +103,22 @@ const App: React.FC = () => {
       color = 'text-red-500';
     }
 
-    return { value: parseFloat(value.toFixed(1)), category, color };
+    return { 
+      value: parseFloat(value.toFixed(1)), 
+      category, 
+      color,
+      idealRange: {
+        min: parseFloat(minIdeal.toFixed(1)),
+        max: parseFloat(maxIdeal.toFixed(1))
+      },
+      toIdeal: parseFloat(toIdeal.toFixed(1))
+    };
   }, [weights, profile.height]);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Dashboard weights={weights} bmi={bmi} targetWeight={profile.targetWeight} />;
+        return <Dashboard weights={weights} bmi={bmi} profile={profile} />;
       case 'history':
         return <WeightList weights={weights} onDelete={deleteWeightEntry} />;
       case 'ai':
@@ -100,7 +126,7 @@ const App: React.FC = () => {
       case 'profile':
         return <ProfileSettings profile={profile} setProfile={setProfile} />;
       default:
-        return <Dashboard weights={weights} bmi={bmi} targetWeight={profile.targetWeight} />;
+        return <Dashboard weights={weights} bmi={bmi} profile={profile} />;
     }
   };
 
@@ -112,7 +138,7 @@ const App: React.FC = () => {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">VitalScale</h1>
           <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mt-1">Sua Jornada de Saúde</p>
         </div>
-        <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-slate-100">
+        <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-slate-100 overflow-hidden">
           <User size={20} className="text-slate-400" />
         </div>
       </header>

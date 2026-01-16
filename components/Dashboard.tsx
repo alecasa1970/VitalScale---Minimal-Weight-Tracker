@@ -1,16 +1,16 @@
 
 import React from 'react';
-import { WeightEntry, BMIResult } from '../types';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
-import { TrendingDown, TrendingUp, Minus, Info } from 'lucide-react';
+import { WeightEntry, BMIResult, UserProfile } from '../types';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { TrendingDown, TrendingUp, Minus, Info, Heart } from 'lucide-react';
 
 interface DashboardProps {
   weights: WeightEntry[];
   bmi: BMIResult;
-  targetWeight?: number;
+  profile: UserProfile;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, targetWeight }) => {
+const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
   const latestWeight = weights.length > 0 ? weights[0].weight : 0;
   const previousWeight = weights.length > 1 ? weights[1].weight : latestWeight;
   const diff = latestWeight - previousWeight;
@@ -19,10 +19,15 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, targetWeight }) => 
     .reverse()
     .slice(-7)
     .map(w => ({
-      // Adicionando T00:00:00 para garantir que o JS interprete como data local
       date: new Date(w.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }),
       weight: w.weight
     }));
+
+  const weightStatusText = () => {
+    if (bmi.toIdeal === 0) return "Você está no peso ideal!";
+    if (bmi.value > 24.9) return `Faltam ${bmi.toIdeal} kg para o peso ideal`;
+    return `Ganhe ${bmi.toIdeal} kg para o peso ideal`;
+  };
 
   return (
     <div className="space-y-6 pt-4">
@@ -46,26 +51,48 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, targetWeight }) => 
         )}
       </div>
 
-      {/* Grid for BMI and Progress */}
+      {/* Grid for BMI and Age */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">IMC</span>
+            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">IMC / Idade</span>
             <Info size={14} className="text-slate-300" />
           </div>
-          <div className={`text-2xl font-bold ${bmi.color}`}>{bmi.value || '--'}</div>
+          <div className={`text-2xl font-bold ${bmi.color}`}>
+            {bmi.value || '--'}
+            <span className="text-slate-300 text-sm font-normal ml-2">/ {profile.age || '--'}a</span>
+          </div>
           <div className="text-[10px] text-slate-500 font-medium mt-1">{bmi.category}</div>
         </div>
 
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Meta</span>
+            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Meta Peso</span>
             <TrendingDown size={14} className="text-slate-300" />
           </div>
-          <div className="text-2xl font-bold text-slate-900">{targetWeight ? `${targetWeight} kg` : '--'}</div>
+          <div className="text-2xl font-bold text-slate-900">{profile.targetWeight ? `${profile.targetWeight} kg` : '--'}</div>
           <div className="text-[10px] text-slate-500 font-medium mt-1">
-            {targetWeight && latestWeight ? `${(latestWeight - targetWeight).toFixed(1)} kg para chegar` : 'Defina no perfil'}
+            {profile.targetWeight && latestWeight ? `${(latestWeight - profile.targetWeight).toFixed(1)} kg para chegar` : 'Defina no perfil'}
           </div>
+        </div>
+      </div>
+
+      {/* Healthy Zone Info */}
+      <div className="bg-[#00C896]/5 p-5 rounded-[24px] border border-[#00C896]/10">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-[#00C896] text-white rounded-xl">
+            <Heart size={16} />
+          </div>
+          <h4 className="font-bold text-slate-800 text-sm">Peso Ideal (IMC 18.5 - 24.9)</h4>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-slate-600 text-xs font-medium">Sua faixa saudável:</span>
+          <span className="text-[#00C896] font-bold text-sm">{bmi.idealRange.min} - {bmi.idealRange.max} kg</span>
+        </div>
+        <div className="mt-2 pt-2 border-t border-[#00C896]/10 text-center">
+           <span className={`text-xs font-bold ${bmi.toIdeal > 0 ? (bmi.value > 24.9 ? 'text-red-500' : 'text-blue-500') : 'text-green-600'}`}>
+              {weightStatusText()}
+           </span>
         </div>
       </div>
 

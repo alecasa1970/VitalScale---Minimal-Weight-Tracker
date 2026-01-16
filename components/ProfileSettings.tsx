@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { UserProfile } from '../types';
-import { User, Ruler, Target, ChevronRight } from 'lucide-react';
+import { User, Ruler, Target, ChevronRight, Calendar } from 'lucide-react';
 
 interface ProfileSettingsProps {
   profile: UserProfile;
@@ -48,6 +48,27 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ profile, setProfile }
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-50 rounded-xl text-orange-500">
+                  <Calendar size={20} />
+                </div>
+                <span className="font-semibold text-slate-700">Idade</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input 
+                  type="number" 
+                  value={profile.age || ''} 
+                  onChange={(e) => handleChange('age', parseInt(e.target.value))}
+                  placeholder="0"
+                  className="text-right focus:outline-none text-slate-500 font-medium w-16"
+                />
+                <span className="text-slate-400 text-sm font-bold">anos</span>
+              </div>
+            </div>
+
+            <div className="h-[1px] bg-slate-50 w-full"></div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
                 <div className="p-2 bg-indigo-50 rounded-xl text-indigo-500">
                   <Ruler size={20} />
                 </div>
@@ -71,7 +92,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ profile, setProfile }
                 <div className="p-2 bg-[#00C896]/10 rounded-xl text-[#00C896]">
                   <Target size={20} />
                 </div>
-                <span className="font-semibold text-slate-700">Meta</span>
+                <span className="font-semibold text-slate-700">Meta Peso</span>
               </div>
               <div className="flex items-center gap-2">
                 <input 
@@ -92,10 +113,6 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ profile, setProfile }
           <div className="space-y-4">
             <button className="w-full flex justify-between items-center group">
               <span className="text-slate-700 font-semibold">Unidades (kg/cm)</span>
-              <ChevronRight size={18} className="text-slate-300 group-active:translate-x-1 transition-transform" />
-            </button>
-            <button className="w-full flex justify-between items-center group">
-              <span className="text-slate-700 font-semibold">Notificações</span>
               <ChevronRight size={18} className="text-slate-300 group-active:translate-x-1 transition-transform" />
             </button>
             <button 
