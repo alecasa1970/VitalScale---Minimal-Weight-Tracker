@@ -138,9 +138,16 @@ const App: React.FC = () => {
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">VitalScale</h1>
           <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mt-1">Sua Jornada de Saúde</p>
         </div>
-        <div className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-slate-100 overflow-hidden">
-          <User size={20} className="text-slate-400" />
-        </div>
+        <button 
+          onClick={() => setActiveTab('profile')}
+          className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-slate-100 overflow-hidden active:scale-90 transition-transform"
+        >
+          {profile.photo ? (
+            <img src={profile.photo} alt="Perfil" className="w-full h-full object-cover" />
+          ) : (
+            <User size={20} className="text-slate-400" />
+          )}
+        </button>
       </header>
 
       {/* Main Content Area */}

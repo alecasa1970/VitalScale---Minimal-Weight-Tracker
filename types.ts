@@ -10,6 +10,7 @@ export interface UserProfile {
   age?: number;
   targetWeight?: number;
   name?: string;
+  photo?: string; // base64 string
 }
 
 export type BMICategory = 'Underweight' | 'Normal' | 'Overweight' | 'Obese' | 'Unknown';

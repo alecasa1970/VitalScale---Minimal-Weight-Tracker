@@ -1,7 +1,7 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { UserProfile } from '../types';
-import { User, Ruler, Target, ChevronRight, Calendar } from 'lucide-react';
+import { User, Ruler, Target, ChevronRight, Calendar, Camera, Trash2 } from 'lucide-react';
 
 interface ProfileSettingsProps {
   profile: UserProfile;
@@ -9,18 +9,80 @@ interface ProfileSettingsProps {
 }
 
 const ProfileSettings: React.FC<ProfileSettingsProps> = ({ profile, setProfile }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleChange = (field: keyof UserProfile, value: string | number) => {
     setProfile({ ...profile, [field]: value });
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) { // Limite de 2MB para localStorage
+        alert("A imagem é muito grande. Escolha uma foto com menos de 2MB.");
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfile({ ...profile, photo: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setProfile({ ...profile, photo: undefined });
+  };
+
+  const triggerUpload = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
-    <div className="space-y-6 pt-4">
+    <div className="space-y-6 pt-4 pb-12">
       <div className="flex flex-col items-center py-6">
-        <div className="w-24 h-24 rounded-full bg-white shadow-md flex items-center justify-center border-4 border-[#00C896]/10 mb-4">
-          <User size={48} className="text-[#00C896]" />
+        <div className="relative">
+          <button 
+            onClick={triggerUpload}
+            className="w-28 h-28 rounded-full bg-white shadow-xl flex items-center justify-center border-4 border-[#00C896]/10 mb-4 overflow-hidden group"
+          >
+            {profile.photo ? (
+              <img src={profile.photo} alt="Sua foto" className="w-full h-full object-cover" />
+            ) : (
+              <User size={56} className="text-[#00C896]" />
+            )}
+            
+            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Camera size={24} className="text-white" />
+            </div>
+          </button>
+          <button 
+            onClick={triggerUpload}
+            className="absolute bottom-4 right-0 w-9 h-9 bg-[#00C896] text-white rounded-full shadow-lg border-4 border-white flex items-center justify-center active:scale-90 transition-transform"
+          >
+            <Camera size={16} />
+          </button>
+          
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept="image/*" 
+            onChange={handleImageUpload}
+          />
         </div>
+        
         <h2 className="text-xl font-bold text-slate-900">{profile.name || 'Seu Perfil'}</h2>
-        <p className="text-slate-400 text-sm font-medium">Configurações de Saúde</p>
+        
+        {profile.photo && (
+          <button 
+            onClick={removePhoto}
+            className="mt-2 text-[10px] font-bold text-red-400 uppercase tracking-widest flex items-center gap-1 hover:text-red-500"
+          >
+            <Trash2 size={10} /> Remover Foto
+          </button>
+        )}
       </div>
 
       <div className="space-y-4">
@@ -40,7 +102,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ profile, setProfile }
                 value={profile.name || ''} 
                 onChange={(e) => handleChange('name', e.target.value)}
                 placeholder="Ex: João Silva"
-                className="text-right focus:outline-none text-slate-500 font-medium placeholder-slate-300"
+                className="text-right focus:outline-none text-slate-500 font-medium placeholder-slate-300 bg-transparent"
               />
             </div>
 
@@ -59,7 +121,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ profile, setProfile }
                   value={profile.age || ''} 
                   onChange={(e) => handleChange('age', parseInt(e.target.value))}
                   placeholder="0"
-                  className="text-right focus:outline-none text-slate-500 font-medium w-16"
+                  className="text-right focus:outline-none text-slate-500 font-medium w-16 bg-transparent"
                 />
                 <span className="text-slate-400 text-sm font-bold">anos</span>
               </div>
@@ -79,7 +141,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ profile, setProfile }
                   type="number" 
                   value={profile.height} 
                   onChange={(e) => handleChange('height', parseInt(e.target.value))}
-                  className="text-right focus:outline-none text-slate-500 font-medium w-16"
+                  className="text-right focus:outline-none text-slate-500 font-medium w-16 bg-transparent"
                 />
                 <span className="text-slate-400 text-sm font-bold">cm</span>
               </div>
@@ -100,7 +162,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ profile, setProfile }
                   value={profile.targetWeight || ''} 
                   onChange={(e) => handleChange('targetWeight', parseFloat(e.target.value))}
                   placeholder="0.0"
-                  className="text-right focus:outline-none text-slate-500 font-medium w-16"
+                  className="text-right focus:outline-none text-slate-500 font-medium w-16 bg-transparent"
                 />
                 <span className="text-slate-400 text-sm font-bold">kg</span>
               </div>
