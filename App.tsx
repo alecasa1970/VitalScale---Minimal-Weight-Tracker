@@ -7,47 +7,58 @@ import {
   BrainCircuit, 
   User, 
   Settings,
+  Droplets,
   Activity,
   X
 } from 'lucide-react';
-import { WeightEntry, AerobicEntry, UserProfile, BMIResult, BMICategory } from './types';
+import { WeightEntry, WaterEntry, AerobicEntry, UserProfile, BMIResult, BMICategory } from './types';
 import Dashboard from './components/Dashboard';
 import WeightList from './components/WeightList';
 import WeightModal from './components/WeightModal';
+import WaterModal from './components/WaterModal';
 import AerobicModal from './components/AerobicModal';
 import AIAssistant from './components/AIAssistant';
 import ProfileSettings from './components/ProfileSettings';
 
 const STORAGE_KEY_WEIGHTS = 'vitalscale_weights';
+const STORAGE_KEY_WATER = 'vitalscale_water';
 const STORAGE_KEY_AEROBIC = 'vitalscale_aerobic';
 const STORAGE_KEY_PROFILE = 'vitalscale_profile';
 
 const App: React.FC = () => {
   // State
   const [weights, setWeights] = useState<WeightEntry[]>([]);
+  const [waters, setWaters] = useState<WaterEntry[]>([]);
   const [aerobics, setAerobics] = useState<AerobicEntry[]>([]);
   const [profile, setProfile] = useState<UserProfile>({ height: 170, age: 25 });
   const [activeTab, setActiveTab] = useState<'home' | 'history' | 'ai' | 'profile'>('home');
   
   const [isWeightModalOpen, setIsWeightModalOpen] = useState(false);
+  const [isWaterModalOpen, setIsWaterModalOpen] = useState(false);
   const [isAerobicModalOpen, setIsAerobicModalOpen] = useState(false);
   const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
 
   // Initialize data
   useEffect(() => {
     const savedWeights = localStorage.getItem(STORAGE_KEY_WEIGHTS);
+    const savedWaters = localStorage.getItem(STORAGE_KEY_WATER);
     const savedAerobics = localStorage.getItem(STORAGE_KEY_AEROBIC);
     const savedProfile = localStorage.getItem(STORAGE_KEY_PROFILE);
     
     if (savedWeights) setWeights(JSON.parse(savedWeights));
+    if (savedWaters) setWaters(JSON.parse(savedWaters));
     if (savedAerobics) setAerobics(JSON.parse(savedAerobics));
     if (savedProfile) setProfile(JSON.parse(savedProfile));
   }, []);
 
-  // Save data whenever it changes
+  // Save data
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_WEIGHTS, JSON.stringify(weights));
   }, [weights]);
+
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_WATER, JSON.stringify(waters));
+  }, [waters]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_AEROBIC, JSON.stringify(aerobics));
@@ -58,28 +69,29 @@ const App: React.FC = () => {
   }, [profile]);
 
   const addWeightEntry = useCallback((weight: number, date: string) => {
-    const newEntry: WeightEntry = {
-      id: crypto.randomUUID(),
-      weight,
-      date
-    };
+    const newEntry: WeightEntry = { id: crypto.randomUUID(), weight, date };
     setWeights(prev => [newEntry, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setIsWeightModalOpen(false);
   }, []);
 
+  const addWaterEntry = useCallback((amount: number, date: string) => {
+    const newEntry: WaterEntry = { id: crypto.randomUUID(), amount, date };
+    setWaters(prev => [newEntry, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+    setIsWaterModalOpen(false);
+  }, []);
+
   const addAerobicEntry = useCallback((distance: number, duration: number, date: string) => {
-    const newEntry: AerobicEntry = {
-      id: crypto.randomUUID(),
-      distance,
-      duration,
-      date
-    };
+    const newEntry: AerobicEntry = { id: crypto.randomUUID(), distance, duration, date };
     setAerobics(prev => [newEntry, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
     setIsAerobicModalOpen(false);
   }, []);
 
   const deleteWeightEntry = useCallback((id: string) => {
     setWeights(prev => prev.filter(w => w.id !== id));
+  }, []);
+
+  const deleteWaterEntry = useCallback((id: string) => {
+    setWaters(prev => prev.filter(w => w.id !== id));
   }, []);
 
   const deleteAerobicEntry = useCallback((id: string) => {
@@ -89,11 +101,8 @@ const App: React.FC = () => {
   const bmi = useMemo((): BMIResult => {
     if (!profile.height || weights.length === 0) {
       return { 
-        value: 0, 
-        category: 'Unknown', 
-        color: 'text-gray-400', 
-        idealRange: { min: 0, max: 0 }, 
-        toIdeal: 0 
+        value: 0, category: 'Unknown', color: 'text-gray-400', 
+        idealRange: { min: 0, max: 0 }, toIdeal: 0 
       };
     }
     const latestWeight = weights[0].weight;
@@ -124,15 +133,15 @@ const App: React.FC = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Dashboard weights={weights} aerobics={aerobics} bmi={bmi} profile={profile} />;
+        return <Dashboard weights={weights} waters={waters} aerobics={aerobics} bmi={bmi} profile={profile} />;
       case 'history':
-        return <WeightList weights={weights} aerobics={aerobics} onWeightDelete={deleteWeightEntry} onAerobicDelete={deleteAerobicEntry} />;
+        return <WeightList weights={weights} waters={waters} aerobics={aerobics} onWeightDelete={deleteWeightEntry} onWaterDelete={deleteWaterEntry} onAerobicDelete={deleteAerobicEntry} />;
       case 'ai':
         return <AIAssistant weights={weights} bmi={bmi} />;
       case 'profile':
         return <ProfileSettings profile={profile} setProfile={setProfile} />;
       default:
-        return <Dashboard weights={weights} aerobics={aerobics} bmi={bmi} profile={profile} />;
+        return <Dashboard weights={weights} waters={waters} aerobics={aerobics} bmi={bmi} profile={profile} />;
     }
   };
 
@@ -159,7 +168,6 @@ const App: React.FC = () => {
         {renderContent()}
       </main>
 
-      {/* Speed Dial Menu for adding data */}
       <div className="fixed bottom-24 right-8 z-40 flex flex-col items-end gap-3">
         {isAddMenuOpen && (
           <>
@@ -171,10 +179,17 @@ const App: React.FC = () => {
               Peso
             </button>
             <button 
+              onClick={() => { setIsWaterModalOpen(true); setIsAddMenuOpen(false); }}
+              className="bg-white text-slate-700 px-4 py-3 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-2 font-bold text-sm fade-in active:scale-95"
+            >
+              <Droplets size={18} className="text-blue-500" />
+              Água
+            </button>
+            <button 
               onClick={() => { setIsAerobicModalOpen(true); setIsAddMenuOpen(false); }}
               className="bg-white text-slate-700 px-4 py-3 rounded-2xl shadow-xl border border-slate-100 flex items-center gap-2 font-bold text-sm fade-in active:scale-95"
             >
-              <Activity size={18} className="text-orange-400" />
+              <Activity size={18} className="text-orange-500" />
               Aeróbico
             </button>
           </>
@@ -202,6 +217,10 @@ const App: React.FC = () => {
         <WeightModal onClose={() => setIsWeightModalOpen(false)} onSave={addWeightEntry} />
       )}
       
+      {isWaterModalOpen && (
+        <WaterModal onClose={() => setIsWaterModalOpen(false)} onSave={addWaterEntry} />
+      )}
+
       {isAerobicModalOpen && (
         <AerobicModal onClose={() => setIsAerobicModalOpen(false)} onSave={addAerobicEntry} />
       )}
@@ -210,7 +229,6 @@ const App: React.FC = () => {
 };
 
 interface NavButtonProps { active: boolean; icon: React.ReactNode; label: string; onClick: () => void; }
-
 const NavButton: React.FC<NavButtonProps> = ({ active, icon, label, onClick }) => (
   <button 
     onClick={onClick}

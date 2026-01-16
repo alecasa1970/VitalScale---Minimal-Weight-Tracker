@@ -5,15 +5,21 @@ export interface WeightEntry {
   date: string;
 }
 
+export interface WaterEntry {
+  id: string;
+  amount: number; // em ml
+  date: string;
+}
+
 export interface AerobicEntry {
   id: string;
-  distance: number; // in km
-  duration: number; // in minutes
+  distance: number; // em km
+  duration: number; // em minutos
   date: string;
 }
 
 export interface UserProfile {
-  height: number; // in cm
+  height: number; // em cm
   age?: number;
   targetWeight?: number;
   name?: string;
@@ -30,5 +36,5 @@ export interface BMIResult {
     min: number;
     max: number;
   };
-  toIdeal: number; // weight difference to reach normal range
+  toIdeal: number; // diferença de peso para atingir a faixa normal
 }
