@@ -23,7 +23,8 @@ const WeightList: React.FC<WeightListProps> = ({ weights, onDelete }) => {
     <div className="space-y-3 pt-4">
       <h2 className="text-slate-900 font-bold text-lg mb-4">Histórico de Pesagem</h2>
       {weights.map((entry, index) => {
-        const date = new Date(entry.date);
+        // Garantindo que a data seja interpretada como local adicionando T00:00:00
+        const date = new Date(entry.date + 'T00:00:00');
         const diff = index < weights.length - 1 ? entry.weight - weights[index + 1].weight : null;
 
         return (

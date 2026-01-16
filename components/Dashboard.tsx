@@ -19,7 +19,8 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, targetWeight }) => 
     .reverse()
     .slice(-7)
     .map(w => ({
-      date: new Date(w.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }),
+      // Adicionando T00:00:00 para garantir que o JS interprete como data local
+      date: new Date(w.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }),
       weight: w.weight
     }));
 

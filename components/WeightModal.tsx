@@ -8,8 +8,17 @@ interface WeightModalProps {
 }
 
 const WeightModal: React.FC<WeightModalProps> = ({ onClose, onSave }) => {
+  // Função para obter a data local no formato YYYY-MM-DD sem problemas de fuso horário
+  const getTodayLocalString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [weight, setWeight] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getTodayLocalString());
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
