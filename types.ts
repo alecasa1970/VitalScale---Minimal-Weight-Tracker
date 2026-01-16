@@ -5,6 +5,13 @@ export interface WeightEntry {
   date: string;
 }
 
+export interface AerobicEntry {
+  id: string;
+  distance: number; // in km
+  duration: number; // in minutes
+  date: string;
+}
+
 export interface UserProfile {
   height: number; // in cm
   age?: number;

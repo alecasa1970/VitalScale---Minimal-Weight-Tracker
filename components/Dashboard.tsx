@@ -1,21 +1,30 @@
 
 import React from 'react';
-import { WeightEntry, BMIResult, UserProfile } from '../types';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Dot } from 'recharts';
-import { TrendingDown, TrendingUp, Minus, Info, Heart } from 'lucide-react';
+import { WeightEntry, AerobicEntry, BMIResult, UserProfile } from '../types';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { TrendingDown, TrendingUp, Minus, Info, Heart, Activity, Zap } from 'lucide-react';
 
 interface DashboardProps {
   weights: WeightEntry[];
+  aerobics: AerobicEntry[];
   bmi: BMIResult;
   profile: UserProfile;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
+const Dashboard: React.FC<DashboardProps> = ({ weights, aerobics, bmi, profile }) => {
   const latestWeight = weights.length > 0 ? weights[0].weight : 0;
   const previousWeight = weights.length > 1 ? weights[1].weight : latestWeight;
   const diff = latestWeight - previousWeight;
 
-  // Mostra as últimas 15 pesagens para um gráfico mais rico
+  // Cálculo de minutos aeróbicos para HOJE
+  const today = new Date().toISOString().split('T')[0];
+  const aerobicMinutes = aerobics
+    .filter(a => a.date === today)
+    .reduce((sum, current) => sum + current.duration, 0);
+    
+  const aerobicGoal = 30;
+  const aerobicProgress = (aerobicMinutes / aerobicGoal) * 100;
+
   const chartData = [...weights]
     .reverse()
     .slice(-15) 
@@ -32,7 +41,7 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
   };
 
   return (
-    <div className="space-y-6 pt-4">
+    <div className="space-y-6 pt-4 pb-10">
       {/* Weight Summary Card */}
       <div className="bg-white p-6 rounded-[32px] shadow-sm border border-slate-100 flex flex-col items-center">
         <span className="text-slate-400 text-sm font-medium mb-1">Peso Atual</span>
@@ -53,28 +62,39 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
         )}
       </div>
 
-      {/* Grid for BMI and Age */}
+      {/* Grid for BMI and Aerobics */}
       <div className="grid grid-cols-2 gap-4">
+        {/* IMC / Idade Card */}
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">IMC / Idade</span>
+            <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">IMC / Idade</span>
             <Info size={14} className="text-slate-300" />
           </div>
           <div className={`text-2xl font-bold ${bmi.color}`}>
             {bmi.value || '--'}
-            <span className="text-slate-300 text-sm font-normal ml-2">/ {profile.age || '--'}a</span>
+            <span className="text-slate-300 text-sm font-normal ml-1">/ {profile.age || '--'}a</span>
           </div>
           <div className="text-[10px] text-slate-500 font-medium mt-1">{bmi.category}</div>
         </div>
 
+        {/* Card Aeróbico Real */}
         <div className="bg-white p-5 rounded-[24px] shadow-sm border border-slate-100">
           <div className="flex justify-between items-start mb-2">
-            <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Meta Peso</span>
-            <TrendingDown size={14} className="text-slate-300" />
+            <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Aeróbico</span>
+            <Activity size={14} className="text-orange-400" />
           </div>
-          <div className="text-2xl font-bold text-slate-900">{profile.targetWeight ? `${profile.targetWeight} kg` : '--'}</div>
-          <div className="text-[10px] text-slate-500 font-medium mt-1">
-            {profile.targetWeight && latestWeight ? `${(latestWeight - profile.targetWeight).toFixed(1)} kg para chegar` : 'Defina no perfil'}
+          <div className="text-2xl font-bold text-slate-900">
+            {aerobicMinutes} 
+            <span className="text-slate-300 text-sm font-normal ml-1">min</span>
+          </div>
+          <div className="mt-2 w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+            <div 
+              className="bg-orange-400 h-full rounded-full transition-all duration-1000" 
+              style={{ width: `${Math.min(aerobicProgress, 100)}%` }}
+            ></div>
+          </div>
+          <div className="text-[9px] text-slate-400 font-bold mt-1.5 uppercase tracking-tighter">
+            Hoje • Meta {aerobicGoal} min
           </div>
         </div>
       </div>
@@ -102,10 +122,10 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
       <div className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-slate-900 font-bold text-sm flex items-center gap-2">
-            <TrendingDown size={18} className="text-[#00C896]" />
+            <Zap size={18} className="text-[#00C896]" />
             Evolução de Peso
           </h3>
-          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Últimas 15 pesagens</span>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Histórico</span>
         </div>
         <div className="h-56 w-full -ml-4">
           {chartData.length > 1 ? (
@@ -126,45 +146,23 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
                   dy={10}
                   interval="preserveStartEnd"
                 />
-                <YAxis 
-                  hide={true} 
-                  domain={['dataMin - 1', 'dataMax + 1']} 
-                />
+                <YAxis hide={true} domain={['dataMin - 1', 'dataMax + 1']} />
                 <Tooltip 
-                  contentStyle={{ 
-                    borderRadius: '16px', 
-                    border: 'none', 
-                    boxShadow: '0 10px 25px rgba(0,0,0,0.1)', 
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    padding: '12px'
-                  }}
+                  contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', fontSize: '12px', fontWeight: 'bold', padding: '12px' }}
                   itemStyle={{ color: '#00C896' }}
                   labelStyle={{ color: '#64748b', marginBottom: '4px' }}
                   labelFormatter={(label, payload) => {
-                    if (payload && payload.length > 0) {
-                      return payload[0].payload.fullDate;
-                    }
+                    if (payload && payload.length > 0) return payload[0].payload.fullDate;
                     return label;
                   }}
                   formatter={(value) => [`${value} kg`, 'Peso']}
                 />
-                <Area 
-                  type="monotone" 
-                  dataKey="weight" 
-                  stroke="#00C896" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorWeight)" 
-                  animationDuration={2000}
-                  dot={{ r: 4, fill: '#00C896', strokeWidth: 2, stroke: '#fff' }}
-                  activeDot={{ r: 6, strokeWidth: 0, fill: '#00C896' }}
-                />
+                <Area type="monotone" dataKey="weight" stroke="#00C896" strokeWidth={3} fillOpacity={1} fill="url(#colorWeight)" animationDuration={2000} dot={{ r: 4, fill: '#00C896', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6, strokeWidth: 0, fill: '#00C896' }} />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex items-center justify-center text-slate-300 text-sm italic text-center px-10">
-              Faça pelo menos duas pesagens para visualizar seu gráfico de evolução.
+              Registre pelo menos duas pesagens para ver seu progresso.
             </div>
           )}
         </div>
