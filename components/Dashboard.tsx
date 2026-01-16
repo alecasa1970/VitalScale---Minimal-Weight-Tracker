@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { WeightEntry, BMIResult, UserProfile } from '../types';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Dot } from 'recharts';
 import { TrendingDown, TrendingUp, Minus, Info, Heart } from 'lucide-react';
 
 interface DashboardProps {
@@ -15,11 +15,13 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
   const previousWeight = weights.length > 1 ? weights[1].weight : latestWeight;
   const diff = latestWeight - previousWeight;
 
+  // Mostra as últimas 15 pesagens para um gráfico mais rico
   const chartData = [...weights]
     .reverse()
-    .slice(-7)
+    .slice(-15) 
     .map(w => ({
-      date: new Date(w.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }),
+      date: new Date(w.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
+      fullDate: new Date(w.date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
       weight: w.weight
     }));
 
@@ -98,14 +100,17 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
 
       {/* Chart Section */}
       <div className="bg-white p-6 rounded-[24px] shadow-sm border border-slate-100">
-        <h3 className="text-slate-900 font-bold mb-6 text-sm flex items-center gap-2">
-          <TrendingDown size={18} className="text-[#00C896]" />
-          Progresso Semanal
-        </h3>
-        <div className="h-48 w-full">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-slate-900 font-bold text-sm flex items-center gap-2">
+            <TrendingDown size={18} className="text-[#00C896]" />
+            Evolução de Peso
+          </h3>
+          <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Últimas 15 pesagens</span>
+        </div>
+        <div className="h-56 w-full -ml-4">
           {chartData.length > 1 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#00C896" stopOpacity={0.2}/>
@@ -117,15 +122,32 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
                   dataKey="date" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fontSize: 10, fill: '#94a3b8' }}
+                  tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
                   dy={10}
+                  interval="preserveStartEnd"
                 />
                 <YAxis 
                   hide={true} 
-                  domain={['dataMin - 2', 'dataMax + 2']} 
+                  domain={['dataMin - 1', 'dataMax + 1']} 
                 />
                 <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', fontSize: '12px' }}
+                  contentStyle={{ 
+                    borderRadius: '16px', 
+                    border: 'none', 
+                    boxShadow: '0 10px 25px rgba(0,0,0,0.1)', 
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    padding: '12px'
+                  }}
+                  itemStyle={{ color: '#00C896' }}
+                  labelStyle={{ color: '#64748b', marginBottom: '4px' }}
+                  labelFormatter={(label, payload) => {
+                    if (payload && payload.length > 0) {
+                      return payload[0].payload.fullDate;
+                    }
+                    return label;
+                  }}
+                  formatter={(value) => [`${value} kg`, 'Peso']}
                 />
                 <Area 
                   type="monotone" 
@@ -134,13 +156,15 @@ const Dashboard: React.FC<DashboardProps> = ({ weights, bmi, profile }) => {
                   strokeWidth={3}
                   fillOpacity={1} 
                   fill="url(#colorWeight)" 
-                  animationDuration={1500}
+                  animationDuration={2000}
+                  dot={{ r: 4, fill: '#00C896', strokeWidth: 2, stroke: '#fff' }}
+                  activeDot={{ r: 6, strokeWidth: 0, fill: '#00C896' }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           ) : (
-            <div className="h-full flex items-center justify-center text-slate-300 text-sm italic">
-              Adicione mais pesagens para ver o gráfico
+            <div className="h-full flex items-center justify-center text-slate-300 text-sm italic text-center px-10">
+              Faça pelo menos duas pesagens para visualizar seu gráfico de evolução.
             </div>
           )}
         </div>
